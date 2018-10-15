@@ -6,11 +6,11 @@ var pageMonitor = (function(){
 	var m_isUseCover = true;
 	var m_lastCheckTime = "";	
 	var m_filterZuheTitle = {
-		"一飞冲天" 	   : 		"冲天",
-		"2号乌龟" 	   : 		"乌龟",
+		"一飞冲天" 	   : 		"@冲天 。。。",
+		"2号乌龟" 	   : 		"@乌龟 。。。",
 		//"战胜指数投资" : 		"测试-战指",
-		"价值发现"     : 		"价发",
-		"来一个组合"  :			"myself"
+		"价值发现"     : 		"@价发 。。。",
+		"来一个组合"  :			"@myself 。。。"
 	};
 	
 	var _log = function(msg){
@@ -23,7 +23,6 @@ var pageMonitor = (function(){
 	};
 	
 	var _bIsUseH5Notify = false;
-	var _bIsNotifyHandled = false;
 	var _notifyItem = null;
 	var _initNotify = function(){
 		if (window.Notification) {
@@ -37,20 +36,31 @@ var pageMonitor = (function(){
 		}		
 	}
 	
-	var _h5NotifyMsg = "";
-	var _h5Notify = function(msg){
-		if(_bIsNotifyHandled) return;
-		var notification = new Notification("您有新的未读消息，请及时查阅。。。", {
-			body: msg || _h5NotifyMsg,
+	var _h5Notify = function(notifyInfo){
+		if(!notifyInfo) {
+			_log("错误参数在_h5Notify,notifyInfo为空");
+			return;
+		}
+		var msg = notifyInfo.msg;
+		var isHandled = notifyInfo.bIsHandled;
+		if(isHandled) return;
+		var notification = new Notification("您有新的未读消息，请及时查阅", {
+			body: msg || "没有消息！！",
 		});
-		notification.onclick = function(){
+		notification.onclick = function(){			
+			notifyInfo.bIsHandled = true;
 			notification.close();
-			notification = null;
-			_bIsNotifyHandled = true;
+			return;
+		}
+		notification.onclose = function(){
+			return;
 		}
 		
-		if(!_bIsNotifyHandled) {
-			setTimeout(_h5Notify,5000);
+		if(!isHandled) {
+			// setTimeout 这里要设置28秒以上（适应自己机器调整），因为当前我机器测试大概26.5秒左右消息框自动消失，28秒的间隔可以保持基本只显示一个消息框！
+			setTimeout(function(ni){
+				_h5Notify(ni);			
+			},28 * 1000,notifyInfo);
 		}
 		else{
 			if(notification) notification.close();
@@ -58,10 +68,8 @@ var pageMonitor = (function(){
 	}
 	
 	var _notify = function(msg){		
-		if(_bIsUseH5Notify){
-			_bIsNotifyHandled = false;
-			_h5NotifyMsg = msg;
-			_h5Notify(msg);
+		if(_bIsUseH5Notify){			
+			_h5Notify({"msg":msg,"bIsHandled":false});
 		}
 		else{
 			alert("[notify] " + msg);
