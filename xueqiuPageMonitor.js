@@ -53,17 +53,13 @@ var pageMonitor = (function(){
 			return;
 		}
 		notification.onclose = function(){
+			// 提示框关闭的时候判断是否已经处理了该消息，否则再次回调直至点击提示框为止。
+			if(!notifyInfo.bIsHandled){
+				setTimeout(function(ni){
+					_h5Notify(ni);			
+				},3 * 1000,notifyInfo);
+			}
 			return;
-		}
-		
-		if(!isHandled) {
-			// setTimeout 这里要设置28秒以上（适应自己机器调整），因为当前我机器测试大概26.5秒左右消息框自动消失，28秒的间隔可以保持基本只显示一个消息框！
-			setTimeout(function(ni){
-				_h5Notify(ni);			
-			},28 * 1000,notifyInfo);
-		}
-		else{
-			if(notification) notification.close();
 		}
 	}
 	
